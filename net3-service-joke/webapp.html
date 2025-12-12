@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Joke Service</title>
+</head>
+<body>
+    <h1>Joke Service</h1>
+    
+    <button onclick="sendWebappCommand({'jsonrpc':'2.0','method': 'getJoke', 'id': 1})">
+        Get a joke
+    </button>
+    
+    <div style="margin-top:8px;"></div>
+    <span id="result" style="border: 1px dotted; margin-top:5px;"></span>
+    
+    <script>
+       window.addEventListener('message', function(event) {
+        if (event.data.type === 'webappResponse') {
+                //fwdToWebapp(event.data.response);
+                response=event.data.response;
+                console.log(response.id);
+            const resultDiv = document.getElementById('result');
+            
+            
+               // resultDiv.textContent = JSON.stringify(response, null, 2);
+            resultDiv.textContent=response.result
+            
+        }
+        });
+    </script>
+</body>
+</html>

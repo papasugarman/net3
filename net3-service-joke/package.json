@@ -1,0 +1,17 @@
+{
+  "name": "net3",
+  "version": "1.0.0",
+  "description": "net3 comms protocol",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dilithium-crystals-js": "^1.1.3",
+    "js-sha3": "^0.9.3",
+    "mlkem": "^2.5.0",
+    "ws": "^8.18.3"
+  }
+}
