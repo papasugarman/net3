@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net3 - Decentralized Network Protocol</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding-bottom: 100px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 1.8em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            color: #455a64;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 12px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .fixed-hover {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #3498db;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .fixed-hover a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background-color: #2980b9;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .fixed-hover a:hover {
+            background-color: #1f5d8b;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            h3 {
+                font-size: 1.2em;
+            }
+
+            .fixed-hover {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                justify-content: center;
+                padding: 12px 15px;
+            }
+
+            .fixed-hover a {
+                flex: 1;
+                text-align: center;
+                padding: 12px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Net3 (Δ3): A new public network</h1>
+
+        <p>Net3 is a new post-Quantum secure public network made for the users, by the users. The network uses its own signature handshake to provide mutual trust between two entities. It is not just a technology, it is also a user-led movement to put control in the hands of the users. </p>
+
+        <h2>What is Net3?</h2>
+
+        <p>Net3 is the third public network (after the internet and Tor) designed ground-up to be a trusted network. All traffic on net3 is authenticated and there are no anonymous connections. All encryption and signing algorithms are Quantum secure and ready for the future.</p>
+
+        <p>Net3 is more than just mere technology, it is a user-led movement to have a network which the users have control over. The user body on Net3 will be able to halt services on its network if the service's behaviour is not up to the mark. Imagine the users kicking out a service because it stole user data. Or, imagine that the user body decides that Ultra processed food can't be sold on the network. </p>
+
+        <p>As the project matures over the years, the user body on Net3 will get to answer an important question: what exactly is user supremacy. The Net3 network is supposed to be the users' network which is controlled and audited by the user body.</p>
+
+        <h2>Core Features</h2>
+
+        <h3>Mutual Authentication</h3>
+
+        <p>Unlike the Internet or Tor, on Net3, there is mutual authentication as a part of the handshake between two entities. And that too without using certificates. This means that when you connect to a service on Net3, the service already knows it's you who is connecting.</p>
+
+        <h3>Key-based access</h3>
+
+        <p>Say goodbye to usernames and passwords. The Net3 system uses cryptographically secure keys to identify and authenticate an entity on the network.</p>
+
+        <h3>Quantum secure cryptography</h3>
+
+        <p>The Net3 network provides Quantum secure cryptography in accordance with the NIST standards</p>
+        
+        <p>For encryption, ML-KEM is used and for signing, Dilithium is employed.</p>
+        
+        <h3>A new naming system</h3>
+
+        <p>Net3 introduces a new naming system that simplifies and categorizes names on the system.</p>
+
+        <p>A typical name looks like this: /0/::jason or /bank/::alpha or /2/::fruitjuice </p>
+
+        <h2>TCP vs Websockets</h2>
+
+        <p>Originally, Net3 is to run on TCP connections. But because of lack of infrastructure and for ease of use, the connecting part is being released as webscokets. Refer to the Github repo to see TCP implementation of Net3.</p>
+
+        <h2>Request for participation</h2>
+
+        <h3>Run a service on Net3</h3>
+
+        <p>Have a look at Net3's github repo. You can run your own service and then register a free name at the Net3 registry to run your service. It's a brand new world - go wild and think of any service that users would find helpful. </p>
+
+        <h3>Join the Net3 foundation</h3>
+
+        <p>Join us as a user, a developer, an enthusiast or as a founding member. Let's join hands and decide on what user supremacy looks like for a network.</p>
+
+        <p>Join our telegram group: <a href="https://t.me/net_three" target="_blank">https://t.me/net_three</a></p>
+        
+        <h2>Github repo</h2>
+
+        <p>Net3's Github repo can be found here: <a href="https://github.com/papasugarman/net3" target="_blank">https://github.com/papasugarman/net3</a></p> 
+
+        <h2>Get a Free Net3 name</h2>
+
+        <p>You can get a free common name on Net3 using the registry service. Free names are available under the root derivative /0. The names are issued for 90 days and can be renewed for free as well. Just head to /0/::registry~3 to get your free common name. One free name per key is allowed.</p>
+    </div>
+
+    <div class="fixed-hover">
+        <a href="./whitepaper.pdf" target="_blank">Whitepaper</a>
+        <a href="./websocket-secure.html" target="_blank">Enter</a>
+    </div>
+</body>
+</html>
