@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Secure Handshake Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        body.loading,
+        body.loading * {
+            cursor: wait !important;
+        }
+        .iframe-overlay.loading,
+        .iframe-overlay.loading *,
+        .iframe-overlay.loading .iframe-container,
+        .iframe-overlay.loading .iframe-content {
+            cursor: wait !important;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
+            color: #555;
+        }
+        input {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        #log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.connected {
+            background: #28a745;
+            color: white;
+        }
+        .status.disconnected {
+            background: #dc3545;
+            color: white;
+        }
+        .status.connecting {
+            background: #ffc107;
+            color: black;
+        }
+        .key-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 5px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        /* Fullscreen iframe overlay */
+        .iframe-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            display: none;
+        }
+        .iframe-overlay.show {
+            display: block;
+        }
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .iframe-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10000;
+            transition: background 0.3s;
+        }
+        .iframe-close-btn:hover {
+            background: #c82333;
+        }
+        .iframe-overlay.loading .iframe-close-btn {
+            cursor: wait !important;
+        }
+        .iframe-content {
+            width: 100%;
+            height: 100%;
+            border: none;
+            cursor: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Secure Handshake Test</h1>
+        <p>This page tests the post-quantum secure WebSocket connection with ML-KEM key exchange, Dilithium signatures, and mutual authentication.</p>
+
+        <div class="warning">
+            <strong>Note:</strong> Make sure the WebSocket server is running before testing. Run: <code>node test-ws-server.js</code>
+        </div>
+
+        <h2>Connection Status <span id="status" class="status disconnected">Disconnected</span></h2>
+
+        <div class="section">
+            <h3>Server Configuration</h3>
+            <div class="input-group">
+                <label>Server Host:</label>
+                <input type="text" id="serverHost" value="127.0.0.1">
+            </div>
+            <div class="input-group">
+                <label>Server Port:</label>
+                <input type="text" id="serverPort" value="80">
+            </div>
+            <div class="input-group">
+                <label>Server Path:</label>
+                <input type="text" id="serverPath" value="/chat" placeholder="e.g., /joke ">
+            </div>
+            <div class="input-group">
+                <label>Server ID:</label>
+                <input type="text" id="serverId" value="7yWyBXMuzSRgX1edGeb2to" placeholder="Base58 server ID">
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Client Identity</h3>
+            <div class="input-group">
+                <label>Seed (optional):</label>
+                <input type="text" id="keySeed" placeholder="Hex seed (96 chars) or leave empty for random">
+                <button onclick="regenerateKeys()">Generate Keys</button>
+            </div>
+            <div id="clientKeyInfo" class="key-info">Generating client keys...</div>
+        </div>
+
+        <div class="section">
+            <h3>Actions</h3>
+            <button id="btnConnect" onclick="testConnect()">1. Connect & Handshake</button>
+            <button id="btnSend" onclick="testSend()" disabled>2. Send Message</button>
+            <button id="btnMultipleSends" onclick="testMultipleSends()" disabled>3. Send Multiple Messages</button>
+            <button id="btnDisconnect" onclick="testDisconnect()" disabled>4. Disconnect</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div class="section">
+            <h3>Custom Message</h3>
+            <div class="input-group">
+                <label>Message (JSON):</label>
+                <input type="text" id="customMessage" placeholder='{"msg": "your message here"}' style="width: 500px;">
+                <button id="btnSendCustom" onclick="testSendCustom()" disabled>Send Custom</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Custom Command (with Iframe Display)</h3>
+            <div class="input-group">
+                <label>Command (JSON):</label>
+                <input type="text" id="commandMessage" placeholder='{"cmd": "your command"}' style="width: 500px;">
+                <button id="btnSendCommand" onclick="testSendCommand()" disabled>Send Command</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Console Log</h3>
+            <div id="log">Initializing...\n</div>
+        </div>
+    </div>
+
+    <!-- Fullscreen iframe overlay -->
+    <div id="iframeOverlay" class="iframe-overlay">
+        <div class="iframe-container">
+            <button class="iframe-close-btn" onclick="closeIframe()">✕ Close</button>
+            <iframe id="iframeContent" class="iframe-content" sandbox="allow-scripts"></iframe>
+        </div>
+    </div>
+
+    <script src="./dilithium.js"></script>
+    <script src="./browser/sha3.min.js"></script>
+    <script type="module">
+        import { SecureConnectionWS } from './browser/connectClassWS.js';
+        import { initDilithium, keyGen, keyGenFromSeed } from './browser/sign-browser.js';
+        import { createFoldedHash } from './browser/hash-browser.js';
+        import { hexToBase58 } from './browser/util-browser.js';
+
+        let connection = null;
+        let clientKeys = null;
+        let dilithiumInitialized = false;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(status) {
+            const statusSpan = document.getElementById('status');
+            statusSpan.className = 'status ' + status;
+            statusSpan.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        }
+
+        function updateButtons(connected) {
+            document.getElementById('btnConnect').disabled = connected;
+            document.getElementById('btnSend').disabled = !connected;
+            document.getElementById('btnMultipleSends').disabled = !connected;
+            document.getElementById('btnSendCustom').disabled = !connected;
+            document.getElementById('btnSendCommand').disabled = !connected;
+            document.getElementById('btnDisconnect').disabled = !connected;
+        }
+
+        function setLoadingCursor(enabled) {
+            const iframeOverlay = document.getElementById('iframeOverlay');
+            const iframeContent = document.getElementById('iframeContent');
+
+            if (enabled) {
+                document.body.classList.add('loading');
+                if (iframeOverlay) {
+                    iframeOverlay.classList.add('loading');
+                }
+                // Try to set cursor on iframe's document if accessible
+                try {
+                    if (iframeContent && iframeContent.contentDocument && iframeContent.contentDocument.body) {
+                        iframeContent.contentDocument.body.style.cursor = 'wait';
+                        const allElements = iframeContent.contentDocument.body.querySelectorAll('*');
+                        allElements.forEach(el => el.style.cursor = 'wait');
+                    }
+                } catch (e) {
+                    // Cross-origin or not yet loaded, ignore
+                }
+            } else {
+                document.body.classList.remove('loading');
+                if (iframeOverlay) {
+                    iframeOverlay.classList.remove('loading');
+                }
+                // Try to reset cursor on iframe's document if accessible
+                try {
+                    if (iframeContent && iframeContent.contentDocument && iframeContent.contentDocument.body) {
+                        iframeContent.contentDocument.body.style.cursor = '';
+                        const allElements = iframeContent.contentDocument.body.querySelectorAll('*');
+                        allElements.forEach(el => el.style.cursor = '');
+                    }
+                } catch (e) {
+                    // Cross-origin or not yet loaded, ignore
+                }
+            }
+        }
+
+        async function generateClientKeys(seed = null) {
+            try {
+                if (seed) {
+                    log(`Generating client identity from seed: ${seed.substring(0, 32)}...`);
+                    clientKeys = await keyGenFromSeed(seed);
+                    log('Keys generated from seed successfully');
+                } else {
+                    log('Generating random client identity (Dilithium5 keypair)...');
+                    clientKeys = await keyGen();
+                    log('Random keys generated successfully');
+                }
+
+                // Calculate client ID
+                const foldedHash = await createFoldedHash(clientKeys.pub);
+                clientKeys.id = hexToBase58(foldedHash);
+
+                log(`Client ID: ${clientKeys.id}`);
+
+                const keyInfoDiv = document.getElementById('clientKeyInfo');
+                keyInfoDiv.innerHTML = `
+                    <strong>Client ID:</strong> ${clientKeys.id}<br>
+                    <strong>Public Key:</strong> ${clientKeys.pub.substring(0, 64)}...<br>
+                    <strong>Private Key:</strong> ${clientKeys.priv.substring(0, 64)}...<br>
+                    ${seed ? `<strong>Seed:</strong> ${seed}<br>` : ''}
+                    <strong>Key Size:</strong> Pub=${clientKeys.pub.length/2} bytes, Priv=${clientKeys.priv.length/2} bytes
+                `;
+
+                return clientKeys;
+            } catch (error) {
+                log(`ERROR: Key generation failed: ${error.message}`);
+                console.error(error);
+                throw error;
+            }
+        }
+
+        async function initializeClient() {
+            try {
+                log('Initializing Dilithium WASM module...');
+                await initDilithium();
+                dilithiumInitialized = true;
+                log('Dilithium initialized successfully');
+
+                await generateClientKeys();
+                log('Ready to connect!');
+            } catch (error) {
+                log(`ERROR: Initialization failed: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        window.regenerateKeys = async function() {
+            if (!dilithiumInitialized) {
+                log('ERROR: Dilithium not initialized yet');
+                return;
+            }
+
+            try {
+                log('========================================');
+                const seedInput = document.getElementById('keySeed').value.trim();
+
+                if (seedInput) {
+                    // Validate seed is hex and correct length
+                    if (!/^[0-9a-fA-F]+$/.test(seedInput)) {
+                        log('ERROR: Seed must be hexadecimal');
+                        return;
+                    }
+                    if (seedInput.length !== 96) {
+                        log(`WARNING: Seed should be 96 hex chars (48 bytes), got ${seedInput.length}`);
+                    }
+                }
+
+                await generateClientKeys(seedInput || null);
+                log('✓ Keys regenerated successfully');
+            } catch (error) {
+                log(`ERROR: Failed to regenerate keys: ${error.message}`);
+                console.error(error);
+            }
+        };
+
+        window.testConnect = async function() {
+            if (!clientKeys) {
+                log('ERROR: Client keys not initialized yet');
+                return;
+            }
+
+            try {
+                log('========================================');
+                log('Starting secure connection...');
+                updateStatus('connecting');
+                updateButtons(false);
+
+                const host = document.getElementById('serverHost').value;
+                const port = document.getElementById('serverPort').value;
+                const path = document.getElementById('serverPath').value.trim();
+                const serverId = document.getElementById('serverId').value;
+
+                connection = new SecureConnectionWS();
+
+                const intended = {
+                    host: host,
+                    port: port,
+                    path: path || undefined,
+                    id: serverId
+                };
+
+                const wsUrl = path
+                    ? `ws://${host}:${port}${path}`
+                    : `ws://${host}:${port}`;
+
+                log(`Connecting to ${wsUrl}`);
+                log(`Intended server ID: ${serverId}`);
+                log('');
+                log('Handshake Phases:');
+                log('  Pass 0: Sending connection template...');
+
+                setLoadingCursor(true);
+                await connection.connect(clientKeys, intended);
+                setLoadingCursor(false);
+
+                log('');
+                log('✓ HANDSHAKE COMPLETE!');
+                log('✓ Secure channel established');
+                log('✓ Both parties authenticated');
+                log(`✓ Connection info: ${connection.getConnectionInfo()}`);
+
+                updateStatus('connected');
+                updateButtons(true);
+
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success';
+                successDiv.innerHTML = '<strong>Success!</strong> Secure WebSocket connection established with mutual authentication.';
+                document.querySelector('.container').insertBefore(successDiv, document.getElementById('log').parentElement);
+                setTimeout(() => successDiv.remove(), 5000);
+
+            } catch (error) {
+                setLoadingCursor(false);
+                log(`ERROR: Connection failed: ${error.message}`);
+                console.error(error);
+                updateStatus('disconnected');
+                updateButtons(false);
+            }
+        };
+
+        window.testSend = async function() {
+            if (!connection || !connection.isConnected()) {
+                log('ERROR: Not connected');
+                return;
+            }
+
+            try {
+                log('========================================');
+                log('Sending test message...');
+
+                const testMessage = {
+                    msg: "Hello from browser!",
+                    timestamp: new Date().toISOString(),
+                    test: true
+                };
+
+                log(`Sending: ${JSON.stringify(testMessage)}`);
+
+                setLoadingCursor(true);
+                const response = await connection.send(testMessage);
+                setLoadingCursor(false);
+
+                log(`Received response: ${JSON.stringify(response)}`);
+                log('✓ Send/receive successful');
+
+            } catch (error) {
+                setLoadingCursor(false);
+                log(`ERROR: Send failed: ${error.message}`);
+                console.error(error);
+            }
+        };
+
+        window.testMultipleSends = async function() {
+            if (!connection || !connection.isConnected()) {
+                log('ERROR: Not connected');
+                return;
+            }
+
+            try {
+                log('========================================');
+                log('Sending multiple messages (5 messages)...');
+
+                for (let i = 1; i <= 5; i++) {
+                    const testMessage = {
+                        msg: `Test message ${i}`,
+                        counter: i,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    log(`[${i}/5] Sending: ${JSON.stringify(testMessage)}`);
+                    setLoadingCursor(true);
+                    const response = await connection.send(testMessage);
+                    setLoadingCursor(false);
+                    log(`[${i}/5] Response: ${JSON.stringify(response)}`);
+
+                    // Small delay between messages
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                log('✓ All messages sent and received successfully');
+
+            } catch (error) {
+                setLoadingCursor(false);
+                log(`ERROR: Multiple sends failed: ${error.message}`);
+                console.error(error);
+            }
+        };
+
+        window.testSendCustom = async function() {
+            if (!connection || !connection.isConnected()) {
+                log('ERROR: Not connected');
+                return;
+            }
+
+            try {
+                log('========================================');
+                const customMessageInput = document.getElementById('customMessage').value.trim();
+
+                if (!customMessageInput) {
+                    log('ERROR: Please enter a message');
+                    return;
+                }
+
+                // Try to parse as JSON
+                let messageObj;
+                try {
+                    messageObj = JSON.parse(customMessageInput);
+                } catch (e) {
+                    log('ERROR: Invalid JSON format. Use {"key": "value"} format');
+                    return;
+                }
+
+                log(`Sending custom message: ${JSON.stringify(messageObj)}`);
+
+                setLoadingCursor(true);
+                const response = await connection.send(messageObj);
+                setLoadingCursor(false);
+
+                log(`Received response: ${JSON.stringify(response)}`);
+                log('✓ Custom message sent successfully');
+
+            } catch (error) {
+                setLoadingCursor(false);
+                log(`ERROR: Send failed: ${error.message}`);
+                console.error(error);
+            }
+        };
+
+        window.testSendCommand = async function() {
+            if (!connection || !connection.isConnected()) {
+                log('ERROR: Not connected');
+                return;
+            }
+
+            try {
+                log('========================================');
+                const commandInput = document.getElementById('commandMessage').value.trim();
+
+                if (!commandInput) {
+                    log('ERROR: Please enter a command');
+                    return;
+                }
+
+                // Try to parse as JSON
+                let commandObj;
+                try {
+                    commandObj = JSON.parse(commandInput);
+                } catch (e) {
+                    log('ERROR: Invalid JSON format. Use {"cmd": "value"} format');
+                    return;
+                }
+
+                log(`Sending command: ${JSON.stringify(commandObj)}`);
+
+                setLoadingCursor(true);
+                const response = await connection.send(commandObj);
+                setLoadingCursor(false);
+
+                log(`Received response: ${JSON.stringify(response)}`);
+                log('✓ Command executed successfully');
+
+                // Display response in iframe
+                showIframe(response);
+
+            } catch (error) {
+                setLoadingCursor(false);
+                log(`ERROR: Command failed: ${error.message}`);
+                console.error(error);
+            }
+        };
+
+        window.showIframe = function(data) {
+            log(`showIframe called with data type: ${typeof data}`);
+
+            const overlay = document.getElementById('iframeOverlay');
+            const iframe = document.getElementById('iframeContent');
+
+            let displayText = '';
+            let isBase64 = false;
+
+            // Handle JSON-RPC response structure
+            if (typeof data === 'object' && data.result) {
+                // Check if result has content with base64
+                if (data.result.content && data.result.contentType) {
+                    // Try to decode base64 content
+                    try {
+                        const decoded = atob(data.result.content);
+                        displayText = decoded;
+                        isBase64 = true;
+                        log(`Decoded base64 content, length: ${displayText.length}`);
+                    } catch (e) {
+                        // Not valid base64, show as-is
+                        displayText = data.result.content;
+                        log(`Using raw content, length: ${displayText.length}`);
+                    }
+                } else if (data.result.content) {
+                    displayText = data.result.content;
+                    log(`Using result.content, length: ${displayText.length}`);
+                } else {
+                    // Show entire result
+                    displayText = JSON.stringify(data.result, null, 2);
+                    log(`Using stringified result, length: ${displayText.length}`);
+                }
+            } else if (typeof data === 'string') {
+                // Try to decode base64
+                try {
+                    const decoded = atob(data);
+                    displayText = decoded;
+                    isBase64 = true;
+                    log(`Decoded string as base64, length: ${displayText.length}`);
+                } catch (e) {
+                    // Not base64, use as-is
+                    displayText = data;
+                    log(`Using string as-is, length: ${displayText.length}`);
+                }
+            } else if (typeof data === 'object') {
+                // JSON data - pretty print
+                displayText = JSON.stringify(data, null, 2);
+                log(`Using stringified object, length: ${displayText.length}`);
+            } else {
+                displayText = String(data);
+                log(`Converting to string, length: ${displayText.length}`);
+            }
+
+            // Check if displayText contains HTML or if it's image data
+            const isHTML = displayText.trim().startsWith('<') && displayText.trim().includes('>');
+            const contentType = (data.result && data.result.contentType) ? data.result.contentType : '';
+            const isImage = contentType.startsWith('image/');
+
+            log(`contentType: ${contentType}, isHTML: ${isHTML}, isImage: ${isImage}`);
+
+            // Create HTML content for iframe
+            const iframeHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .display-container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .content-area {
+            flex: 1;
+            width: 100%;
+            overflow: auto;
+        }
+        .centered-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .content-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow: auto;
+        }
+        .html-display {
+            width: 100%;
+            min-height: 100vh;
+        }
+        .media-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .media-display img, .media-display video {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        .media-display embed, .media-display object {
+            width: 90vw;
+            height: 90vh;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #e0e0e0;
+        }
+        .json-view {
+            color: #e0e0e0;
+        }
+        .json-key {
+            color: #79c0ff;
+        }
+        .json-string {
+            color: #a5d6ff;
+        }
+        .json-number {
+            color: #79c0ff;
+        }
+        .json-boolean {
+            color: #ff7b72;
+        }
+        .json-null {
+            color: #ffa657;
+        }
+        .command-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+        .command-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .command-input {
+            width: 300px;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            font-family: monospace;
+            font-size: 14px;
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 10000;
+        }
+    <\/style>
+<\/head>
+<body>
+    <div id="displayArea" class="display-container"><\/div>
+    <input type="text" id="commandInput" class="command-input" placeholder='{"cmd": "example"}'>
+    <button class="command-btn" onclick="sendCommand()">Send Command<\/button>
+    <script>
+        function sendCommand() {
+            const input = document.getElementById('commandInput').value.trim();
+            if (!input) {
+                alert('Please enter a command');
+                return;
+            }
+
+            try {
+                const commandObj = JSON.parse(input);
+                // Send message to parent to execute command
+                window.parent.postMessage({
+                    type: 'executeCommand',
+                    command: commandObj
+                }, '*');
+            } catch (e) {
+                alert('Invalid JSON format');
+            }
+        }
+
+        function sendWebappCommand(input) {
+            
+            try {
+                //const commandObj = JSON.parse(input);
+                commandObj=input;
+                //console.log(input);
+                // Send message to parent to execute command
+                window.parent.postMessage({
+                    type: 'webappCommand',
+                    command: commandObj
+                }, '*');
+            } catch (e) {
+                console.log(e);
+                alert('Invalid JSON format'); 
+            }
+        }
+
+        function webappGoTo(input) {
+
+            try {
+                //const commandObj = JSON.parse(input);
+                commandObj=input;
+                // Send message to parent to execute command
+                window.parent.postMessage({
+                    type: 'executeCommand',
+                    command: commandObj
+                }, '*');
+            } catch (e) {
+                alert('Invalid JSON format');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function syntaxHighlightJSON(json) {
+            if (typeof json !== 'string') {
+                json = JSON.stringify(json, null, 2);
+            }
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '<\/span>';
+            });
+        }
+
+        function renderContent(contentType, content, rawResponse) {
+            const displayArea = document.getElementById('displayArea');
+
+            let html = '';
+
+            // Determine content type and render accordingly
+            if (contentType === 'text/html' || (typeof content === 'string' && (content.trim().startsWith('<!DOCTYPE html') || content.trim().startsWith('<html')))) {
+                // HTML content
+                html = \`<div class="html-display">\${content}<\/div>\`;
+            } else if (contentType && contentType.startsWith('image/')) {
+                // Image content
+                html = \`<div class="media-display"><img src="data:\${contentType};base64,\${rawResponse.result.content}" alt="Image"><\/div>\`;
+            } else if (contentType === 'application/pdf') {
+                // PDF content
+                html = \`<div class="media-display"><embed src="data:application/pdf;base64,\${rawResponse.result.content}" type="application/pdf"><\/div>\`;
+            } else if (contentType && (contentType.startsWith('video/') || contentType.startsWith('audio/'))) {
+                // Video/Audio content
+                html = \`<div class="media-display"><video controls src="data:\${contentType};base64,\${rawResponse.result.content}"><\/video><\/div>\`;
+            } else if (typeof content === 'object') {
+                // Object/JSON content
+                html = \`<div class="centered-content"><div class="content-box"><pre class="json-view">\${syntaxHighlightJSON(content)}<\/pre><\/div><\/div>\`;
+            } else if (contentType && contentType.startsWith('text/')) {
+                // Text content
+                html = \`<div class="centered-content"><div class="content-box"><pre>\${escapeHtml(String(content))}<\/pre><\/div><\/div>\`;
+            } else {
+                // Default: try to display as text or JSON
+                if (typeof content === 'string') {
+                    html = \`<div class="centered-content"><div class="content-box"><pre>\${escapeHtml(content)}<\/pre><\/div><\/div>\`;
+                } else {
+                    html = \`<div class="centered-content"><div class="content-box"><pre class="json-view">\${syntaxHighlightJSON(content)}<\/pre><\/div><\/div>\`;
+                }
+            }
+
+            // Use createContextualFragment to allow scripts to execute
+            displayArea.innerHTML = ''; // Clear first
+            const range = document.createRange();
+            range.selectNode(displayArea);
+            const fragment = range.createContextualFragment(html);
+            displayArea.appendChild(fragment);
+        }
+
+        // Initial render
+        renderContent(
+            '${contentType}',
+            \`${displayText.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$').replace(/<\/script>/gi, '<\\/script>')}\`,
+            ${JSON.stringify(data)}
+        );
+
+        function handleResponse(response) {
+            let content = '';
+            let contentType = '';
+
+            // Handle JSON-RPC response structure
+            if (typeof response === 'object' && response.result) {
+                contentType = response.result.contentType || '';
+
+                if (response.result.content && response.result.contentType) {
+                    // Try to decode base64 content
+                    try {
+                        const decoded = atob(response.result.content);
+                        content = decoded;
+                    } catch (e) {
+                        // Not valid base64, show as-is
+                        content = response.result.content;
+                    }
+                } else if (response.result.content) {
+                    content = response.result.content;
+                } else {
+                    // Show entire result as JSON
+                    content = response.result;
+                    contentType = '';
+                }
+            } else if (typeof response === 'string') {
+                try {
+                    const decoded = atob(response);
+                    content = decoded;
+                } catch (e) {
+                    content = response;
+                }
+            } else {
+                content = response;
+            }
+
+            // Render the content
+            renderContent(contentType, content, response);
+        }
+
+        // Listen for responses from parent
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'commandResponse') {
+                handleResponse(event.data.response);
+            }
+            
+        });
+    <\/script>
+<\/body>
+<\/html>`;
+
+            // Write content to iframe
+            iframe.srcdoc = iframeHTML;
+
+            // Show overlay
+            overlay.classList.add('show');
+
+            log('Iframe displayed with server data');
+        };
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Listen for messages from iframe
+        window.addEventListener('message', async function(event) {
+            if (event.data.type === 'executeCommand') {
+                if (!connection || !connection.isConnected()) {
+                    log('ERROR: Not connected - command from iframe ignored');
+                    return;
+                }
+
+                try {
+                    log('========================================');
+                    log(`Command from iframe: ${JSON.stringify(event.data.command)}`);
+
+                    setLoadingCursor(true);
+                    const response = await connection.send(event.data.command);
+                    setLoadingCursor(false);
+
+                    log(`Received response: ${JSON.stringify(response)}`);
+                    log('✓ Command executed successfully');
+
+                    // Send response back to iframe
+                    const iframe = document.getElementById('iframeContent');
+                    iframe.contentWindow.postMessage({
+                        type: 'commandResponse',
+                        response: response
+                    }, '*');
+
+                } catch (error) {
+                    setLoadingCursor(false);
+                    log(`ERROR: Command from iframe failed: ${error.message}`);
+                    console.error(error);
+                }
+            }
+            if (event.data.type === 'webappCommand') {
+                if (!connection || !connection.isConnected()) {
+                    log('ERROR: Not connected - command from iframe ignored');
+                    return;
+                }
+
+                try {
+                    log('========================================');
+                    log(`Command from iframe child: ${JSON.stringify(event.data.command)}`);
+
+                    setLoadingCursor(true);
+                    const response = await connection.send(event.data.command);
+                    setLoadingCursor(false);
+
+                    log(`Received response: ${JSON.stringify(response)}`);
+                    log('✓ Command executed successfully');
+
+                    // Send response back to iframe
+                    const iframe = document.getElementById('iframeContent');
+                    iframe.contentWindow.postMessage({
+                        type: 'webappResponse',
+                        response: response
+                    }, '*');
+
+                } catch (error) {
+                    setLoadingCursor(false);
+                    log(`ERROR: Command from iframe failed: ${error.message}`);
+                    console.error(error);
+                }
+            }
+        });
+
+        window.closeIframe = function() {
+            const overlay = document.getElementById('iframeOverlay');
+            const iframe = document.getElementById('iframeContent');
+
+            // Clear the iframe content completely
+            iframe.srcdoc = '';
+
+            overlay.classList.remove('show');
+            log('Iframe closed');
+        };
+
+        window.testDisconnect = function() {
+            if (connection) {
+                log('========================================');
+                log('Disconnecting...');
+                connection.disconnect();
+                connection = null;
+                updateStatus('disconnected');
+                updateButtons(false);
+                log('✓ Disconnected');
+            }
+        };
+
+        window.clearLog = function() {
+            document.getElementById('log').textContent = '';
+            log('Log cleared');
+        };
+
+        // Initialize on page load
+        log('Page loaded');
+        initializeClient();
+
+        // Make connection available globally for debugging
+        window.debugConnection = () => connection;
+    </script>
+</body>
+</html>

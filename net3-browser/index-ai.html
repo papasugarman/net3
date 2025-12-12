@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net3 Service Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+        }
+        .header h1 {
+            font-size: 20px;
+            color: #333;
+            margin-right: auto;
+        }
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: #667eea;
+        }
+        .go-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .go-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .go-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .gear-icon {
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+        .gear-icon:hover {
+            transform: rotate(90deg);
+        }
+        .gear-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: #667eea;
+        }
+        .iframe-container {
+            flex: 1;
+            background: white;
+            margin: 0;
+            overflow: hidden;
+        }
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .loading-overlay.show {
+            display: flex;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .modal-header h2 {
+            color: #333;
+            margin: 0;
+        }
+        .close-button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .close-button:hover {
+            background: #c82333;
+        }
+        .key-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+        .key-info label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .key-info .key-value {
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            background: white;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .button-group button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .button-group button:hover {
+            opacity: 0.9;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .status-indicator.connected {
+            background: #28a745;
+        }
+        .status-indicator.disconnected {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Net3 Browser<span id="statusIndicator" class="status-indicator disconnected"></span></h1>
+        <div class="search-container">
+            <input type="text"
+                   class="search-input"
+                   id="serviceInput"
+                   placeholder="Enter service name (e.g., chat, joke, etc.)"
+                   autocomplete="off">
+            <button class="go-button" id="goButton">Go</button>
+        </div>
+        <div class="gear-icon" id="gearIcon" title="View Keys">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+            </svg>
+        </div>
+    </div>
+
+    <div class="iframe-container">
+        <iframe id="serviceIframe" sandbox="allow-scripts"></iframe>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Keys Modal -->
+    <div class="modal" id="keysModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Client Identity & Keys</h2>
+                <button class="close-button" onclick="closeKeysModal()">Close</button>
+            </div>
+            <div class="key-info">
+                <label>Client ID:</label>
+                <div class="key-value" id="displayClientId">Loading...</div>
+            </div>
+            <div class="key-info">
+                <label>Public Key (Dilithium5):</label>
+                <div class="key-value" id="displayPublicKey">Loading...</div>
+            </div>
+            <div class="key-info">
+                <label>Private Key (Dilithium5):</label>
+                <div class="key-value" id="displayPrivateKey">Loading...</div>
+            </div>
+            <div class="key-info">
+                <label>Seed (for recovery):</label>
+                <div class="key-value" id="displaySeed">N/A</div>
+            </div>
+            <div class="button-group">
+                <button onclick="regenerateKeys()">Regenerate Keys</button>
+                <button onclick="exportKeys()">Export Keys</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./dilithium.js"></script>
+    <script src="./browser/sha3.min.js"></script>
+    <script type="module">
+        import { SecureConnectionWS } from './browser/connectClassWS.js';
+        import { initDilithium, keyGen, keyGenFromSeed } from './browser/sign-browser.js';
+        import { createFoldedHash } from './browser/hash-browser.js';
+        import { hexToBase58 } from './browser/util-browser.js';
+
+        let connection = null;
+        let clientKeys = null;
+        let dilithiumInitialized = false;
+        const STORAGE_KEY = 'net3_client_keys';
+        const REGISTRY_HOST = '127.0.0.1';
+        const REGISTRY_PORT = '80';
+        const REGISTRY_PATH = '/registry';
+
+        // Initialize Dilithium and load/generate keys
+        async function initialize() {
+            try {
+                console.log('Initializing Dilithium...');
+                await initDilithium();
+                dilithiumInitialized = true;
+                console.log('Dilithium initialized');
+
+                // Check if keys exist in localStorage
+                const storedKeys = localStorage.getItem(STORAGE_KEY);
+                if (storedKeys) {
+                    console.log('Loading keys from localStorage');
+                    const parsed = JSON.parse(storedKeys);
+
+                    // If seed is stored, regenerate from seed
+                    if (parsed.seed) {
+                        clientKeys = await keyGenFromSeed(parsed.seed);
+                    } else {
+                        // Use stored keys directly
+                        clientKeys = {
+                            pub: parsed.pub,
+                            priv: parsed.priv,
+                            seed: null
+                        };
+                    }
+
+                    // Calculate client ID
+                    const foldedHash = await createFoldedHash(clientKeys.pub);
+                    clientKeys.id = hexToBase58(foldedHash);
+                    console.log('Keys loaded, Client ID:', clientKeys.id);
+                } else {
+                    console.log('No keys found, generating new keys');
+                    await generateAndStoreKeys();
+                }
+
+                updateKeyDisplay();
+            } catch (error) {
+                console.error('Initialization failed:', error);
+                alert('Failed to initialize: ' + error.message);
+            }
+        }
+
+        async function generateAndStoreKeys(seed = null) {
+            try {
+                if (seed) {
+                    clientKeys = await keyGenFromSeed(seed);
+                    clientKeys.seed = seed;
+                } else {
+                    clientKeys = await keyGen();
+                    clientKeys.seed = null;
+                }
+
+                const foldedHash = await createFoldedHash(clientKeys.pub);
+                clientKeys.id = hexToBase58(foldedHash);
+
+                // Store in localStorage
+                const keysToStore = {
+                    pub: clientKeys.pub,
+                    priv: clientKeys.priv,
+                    seed: clientKeys.seed,
+                    id: clientKeys.id
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(keysToStore));
+
+                console.log('Keys generated and stored, Client ID:', clientKeys.id);
+                updateKeyDisplay();
+            } catch (error) {
+                console.error('Key generation failed:', error);
+                throw error;
+            }
+        }
+
+        function updateKeyDisplay() {
+            if (!clientKeys) return;
+
+            document.getElementById('displayClientId').textContent = clientKeys.id || 'N/A';
+            document.getElementById('displayPublicKey').textContent = clientKeys.pub ? clientKeys.pub.substring(0, 128) + '...' : 'N/A';
+            document.getElementById('displayPrivateKey').textContent = clientKeys.priv ? clientKeys.priv.substring(0, 128) + '...' : 'N/A';
+            document.getElementById('displaySeed').textContent = clientKeys.seed || 'N/A (keys generated randomly)';
+        }
+
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.add('show');
+            } else {
+                overlay.classList.remove('show');
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const indicator = document.getElementById('statusIndicator');
+            if (connected) {
+                indicator.classList.remove('disconnected');
+                indicator.classList.add('connected');
+            } else {
+                indicator.classList.remove('connected');
+                indicator.classList.add('disconnected');
+            }
+        }
+
+        async function connectToService(host, port, path, serverId) {
+            try {
+                showLoading(true);
+                console.log(`Connecting to ${host}:${port}${path}, Server ID: ${serverId}`);
+
+                if (connection) {
+                    connection.disconnect();
+                }
+
+                connection = new SecureConnectionWS();
+
+                const intended = {
+                    host: host,
+                    port: port,
+                    path: path,
+                    id: serverId
+                };
+
+                await connection.connect(clientKeys, intended);
+                console.log('Connected successfully');
+                updateConnectionStatus(true);
+
+                return connection;
+            } catch (error) {
+                console.error('Connection failed:', error);
+                updateConnectionStatus(false);
+                throw error;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function queryRegistry(serviceName) {
+            try {
+                console.log(`Querying registry for service: ${serviceName}`);
+
+                // First, connect to registry service
+                // You'll need to get the registry server ID from somewhere
+                const registryServerId = 'FZs63hQgWLaQLGiDdKzN8B'; // Placeholder - should be configured
+
+                await connectToService(REGISTRY_HOST, REGISTRY_PORT, REGISTRY_PATH, registryServerId);
+
+                // Query the service
+                const query = {
+                    jsonrpc:"2.0",
+                    method: 'getInfo',
+                    params:{
+                    root: '/0',
+                    name: serviceName
+                    },
+                    id:0
+                };
+
+                const response = await connection.send(query);
+                console.log('Registry response:', response);
+
+                // Extract service details from response
+                if (response && response.result) {
+                    return response.result;
+                }
+
+                throw new Error('Invalid registry response');
+            } catch (error) {
+                console.error('Registry query failed:', error);
+                throw error;
+            }
+        }
+
+        async function openService(serviceName) {
+            try {
+                if (!clientKeys) {
+                    alert('Keys not initialized yet');
+                    return;
+                }
+
+                showLoading(true);
+
+                // Query registry for service details
+                var serviceInfo = await queryRegistry(serviceName);
+                console.log('Service info:', serviceInfo);
+
+                if(serviceInfo.length==0)
+                throw Error("The registry returned no data");
+                serviceInfo=serviceInfo[0];
+                // Connect to the actual service
+                await connectToService(
+                    serviceInfo.target.host,
+                    serviceInfo.target.port,
+                    serviceInfo.target.path,
+                    serviceInfo.id
+                );
+
+                // Display service in iframe
+                displayServiceInIframe(connection);
+
+            } catch (error) {
+                console.error('Failed to open service:', error);
+                alert('Failed to open service: ' + error.message);
+                updateConnectionStatus(false);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayServiceInIframe(connection) {
+            const iframe = document.getElementById('serviceIframe');
+
+            // Create a basic HTML page that can interact with the service
+            const iframeContent = '<!DOCTYPE html>' +
+'<html>' +
+'<head>' +
+'    <style>' +
+'        body {' +
+'            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;' +
+'            padding: 20px;' +
+'            margin: 0;' +
+'        }' +
+'        .service-container {' +
+'            max-width: 1200px;' +
+'            margin: 0 auto;' +
+'        }' +
+'        h1 {' +
+'            color: #333;' +
+'        }' +
+'        .message-input {' +
+'            width: 100%;' +
+'            padding: 10px;' +
+'            border: 2px solid #ddd;' +
+'            border-radius: 5px;' +
+'            font-size: 14px;' +
+'            margin-bottom: 10px;' +
+'        }' +
+'        .send-button {' +
+'            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);' +
+'            color: white;' +
+'            border: none;' +
+'            padding: 10px 20px;' +
+'            border-radius: 5px;' +
+'            cursor: pointer;' +
+'            font-size: 14px;' +
+'        }' +
+'        .response-area {' +
+'            margin-top: 20px;' +
+'            padding: 15px;' +
+'            background: #f8f9fa;' +
+'            border-radius: 5px;' +
+'            min-height: 200px;' +
+'            white-space: pre-wrap;' +
+'            word-wrap: break-word;' +
+'        }' +
+'    </style>' +
+'</head>' +
+'<body>' +
+'    <div class="service-container">' +
+'        <h1>Service Interface</h1>' +
+'        <div>' +
+'            <input type="text" class="message-input" id="messageInput" placeholder="Enter command (JSON format)">' +
+'            <button class="send-button" onclick="sendMessage()">Send</button>' +
+'        </div>' +
+'        <div class="response-area" id="responseArea">Waiting for commands...</div>' +
+'    </div>' +
+'    <script>' +
+'        function sendMessage() {' +
+'            const input = document.getElementById("messageInput").value;' +
+'            if (!input) return;' +
+'            try {' +
+'                const message = JSON.parse(input);' +
+'                window.parent.postMessage({' +
+'                    type: "sendToService",' +
+'                    message: message' +
+'                }, "*");' +
+'                document.getElementById("responseArea").textContent = "Sending...";' +
+'            } catch (e) {' +
+'                document.getElementById("responseArea").textContent = "Error: Invalid JSON";' +
+'            }' +
+'        }' +
+'        window.addEventListener("message", function(event) {' +
+'            if (event.data.type === "serviceResponse") {' +
+'                const responseArea = document.getElementById("responseArea");' +
+'                responseArea.textContent = JSON.stringify(event.data.response, null, 2);' +
+'            }' +
+'        });' +
+'    <\/script>' +
+'</body>' +
+'</html>';
+
+            iframe.srcdoc = iframeContent;
+        }
+
+        // Listen for messages from iframe
+        window.addEventListener('message', async function(event) {
+            if (event.data.type === 'sendToService') {
+                if (!connection || !connection.isConnected()) {
+                    console.error('Not connected to service');
+                    return;
+                }
+
+                try {
+                    showLoading(true);
+                    const response = await connection.send(event.data.message);
+                    console.log('Service response:', response);
+
+                    // Send response back to iframe
+                    const iframe = document.getElementById('serviceIframe');
+                    iframe.contentWindow.postMessage({
+                        type: 'serviceResponse',
+                        response: response
+                    }, '*');
+                } catch (error) {
+                    console.error('Send to service failed:', error);
+                    const iframe = document.getElementById('serviceIframe');
+                    iframe.contentWindow.postMessage({
+                        type: 'serviceResponse',
+                        response: { error: error.message }
+                    }, '*');
+                } finally {
+                    showLoading(false);
+                }
+            }
+        });
+
+        // Event listeners
+        document.getElementById('goButton').addEventListener('click', async function() {
+            const serviceName = document.getElementById('serviceInput').value.trim();
+            if (!serviceName) {
+                alert('Please enter a service name');
+                return;
+            }
+            await openService(serviceName);
+        });
+
+        document.getElementById('serviceInput').addEventListener('keypress', async function(e) {
+            if (e.key === 'Enter') {
+                const serviceName = this.value.trim();
+                if (serviceName) {
+                    await openService(serviceName);
+                }
+            }
+        });
+
+        document.getElementById('gearIcon').addEventListener('click', function() {
+            document.getElementById('keysModal').classList.add('show');
+        });
+
+        window.closeKeysModal = function() {
+            document.getElementById('keysModal').classList.remove('show');
+        };
+
+        window.regenerateKeys = async function() {
+            if (!dilithiumInitialized) {
+                alert('System not initialized yet');
+                return;
+            }
+
+            const confirmRegen = confirm('Are you sure you want to regenerate keys? This will replace your current identity.');
+            if (!confirmRegen) return;
+
+            try {
+                showLoading(true);
+                await generateAndStoreKeys();
+                alert('Keys regenerated successfully! Your new Client ID: ' + clientKeys.id);
+            } catch (error) {
+                alert('Failed to regenerate keys: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        };
+
+        window.exportKeys = function() {
+            if (!clientKeys) {
+                alert('No keys to export');
+                return;
+            }
+
+            const keysData = {
+                clientId: clientKeys.id,
+                publicKey: clientKeys.pub,
+                privateKey: clientKeys.priv,
+                seed: clientKeys.seed
+            };
+
+            const dataStr = JSON.stringify(keysData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'net3-keys.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        };
+
+        // Make functions globally available
+        window.connection = () => connection;
+        window.clientKeys = () => clientKeys;
+
+        // Initialize on load
+        initialize();
+    </script>
+</body>
+</html>

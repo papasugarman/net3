@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net3 Δ3</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+        .gear-button {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            z-index: 1000;
+        }
+        .gear-button:hover {
+            transform: scale(1.1);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.show {
+            display: block;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+        .close-btn {
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            margin: 0;
+            width: auto;
+            height: auto;
+        }
+        .close-btn:hover {
+            color: #dc3545;
+        }
+        .key-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 11px;
+            word-break: break-all;
+            max-height: 100px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .key-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .download-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            margin-top: 15px;
+        }
+        .regenerate-btn {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            margin-top: 15px;
+            margin-left: 10px;
+        }
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        body.loading,
+        body.loading * {
+            cursor: wait !important;
+        }
+        .iframe-overlay.loading,
+        .iframe-overlay.loading *,
+        .iframe-overlay.loading .iframe-container,
+        .iframe-overlay.loading .iframe-content {
+            cursor: wait !important;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
+            color: #555;
+        }
+        input {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+            font-size: 14px;
+        }
+        select{
+                padding: 8px;
+                border: 2px solid #ddd;
+                border-radius: 4px;
+                width: 100px;
+                font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        @media (max-width: 768px) {
+            input {
+                width: 150px;
+                padding: 6px;
+                font-size: 12px;
+            }
+            select {
+                width: 80px;
+                padding: 6px;
+                font-size: 12px;
+            }
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+        #log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.connected {
+            background: #28a745;
+            color: white;
+        }
+        .status.disconnected {
+            background: #dc3545;
+            color: white;
+        }
+        .status.connecting {
+            background: #ffc107;
+            color: black;
+        }
+        .key-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 5px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        /* Fullscreen iframe overlay */
+        .iframe-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            display: none;
+        }
+        .iframe-overlay.show {
+            display: block;
+        }
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .iframe-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 10000;
+            transition: background 0.3s, transform 0.2s;
+            min-width: 60px;
+            min-height: 50px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .iframe-close-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+        .iframe-close-btn:active {
+            background: #bd2130;
+            transform: scale(0.98);
+        }
+        @media (max-width: 768px) {
+            .iframe-close-btn {
+                top: 5px;
+                right: 5px;
+                padding: 18px 28px;
+                font-size: 28px;
+                min-width: 70px;
+                min-height: 60px;
+                border-radius: 10px;
+            }
+        }
+        .iframe-overlay.loading .iframe-close-btn {
+            cursor: wait !important;
+        }
+        .iframe-content {
+            width: 100%;
+            height: 100%;
+            border: none;
+            cursor: inherit;
+        }
+        /* Loading spinner overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-overlay.show {
+            display: flex;
+        }
+        .spinner-container {
+            text-align: center;
+        }
+        .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <button class="gear-button" onclick="openKeysModal()" title="View Keys">⚙️</button>
+
+    <div class="container">
+        <h1>Net3 (Δ3) Browser</h1>
+
+        <div class="section" style="text-align: center;">
+            <h3>Navigate</h3>
+            <div class="input-group">
+                <select id="root">
+                    <option >/0/</option>
+                    <option disabled>/1/</option>
+                    <option disabled>/2/</option>
+                    <option disabled>/hotel/</option>
+                    <option disabled>/airline/</option>
+                    <option disabled>/pharma/</option>
+                    <option disabled>/bank/</option>
+                </select>
+                <input type="text" id="namee" placeholder='::registry'>
+                <select id="func">
+                    <option value="0">~0 (Func list)</option>
+                    <option value="1">~1 (Owner info)</option>
+                    <option selected value="2">~2 (web page)</option>
+                    <option value="3">~3 (web app)</option>
+                </select>
+                <button id="btnGo" onclick="goTo()">Go</button>
+            </div>
+            <div style="text-align: center;">
+            Try:
+            <br>
+            <a style="text-decoration: underline; cursor:pointer" onclick="document.getElementById('namee').value='::joke';goTo();">/0/::joke</a>
+            <br>
+            <a style="text-decoration: underline; cursor:pointer" onclick="document.getElementById('namee').value='::messagemate';goTo();">/0/::messagemate</a>
+            <br>
+            <a style="text-decoration: underline; cursor:pointer" onclick="document.getElementById('namee').value='::registry';goTo();">/0/::registry</a>
+            <br>
+            <a style="text-decoration: underline; cursor:pointer" onclick="document.getElementById('namee').value='::papasugarman';goTo();">/0/::papasugarman</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Console Log</h3>
+            <div id="log">Initializing...\n</div>
+        </div>
+    </div>
+
+    <!-- Keys Modal -->
+    <div id="keysModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cryptographic Keys</h2>
+                <button class="close-btn" onclick="closeKeysModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="key-label">Client ID:</div>
+                <div id="modalClientId" class="key-display"></div>
+                <div class="key-label">Public Key:</div>
+                <div id="modalPublicKey" class="key-display"></div>
+                <div class="key-label">Private Key:</div>
+                <div id="modalPrivateKey" class="key-display"></div>
+                <div class="key-label">Seed:</div>
+                <div id="modalSeed" class="key-display"></div>
+            </div>
+            <button class="download-btn" onclick="downloadKeys()">Download Keys</button>
+            <button class="regenerate-btn" onclick="regenerateKeys()">Regenerate Keys</button>
+        </div>
+    </div>
+
+    <!-- Fullscreen iframe overlay -->
+    <div id="iframeOverlay" class="iframe-overlay">
+        <div class="iframe-container">
+            <button class="iframe-close-btn" onclick="closeIframe()" ontouchstart="this.style.background='#bd2130'" ontouchend="this.style.background='#dc3545'">✕</button>
+            <iframe id="iframeContent" class="iframe-content" sandbox="allow-scripts"></iframe>
+        </div>
+    </div>
+
+    <!-- Loading spinner overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner-container">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading...</div>
+        </div>
+    </div>
+
+    <script src="./dilithium.js"></script>
+    <script src="./browser/sha3.min.js"></script>
+    <script type="module">
+        import { SecureConnectionWS } from './browser/connectClassWS.js';
+        import { initDilithium, keyGen, keyGenFromSeed } from './browser/sign-browser.js';
+        import { createFoldedHash } from './browser/hash-browser.js';
+        import { hexToBase58 } from './browser/util-browser.js';
+
+        let connection = null;
+        let clientKeys = null;
+        let dilithiumInitialized = false;
+        let keySeed = null; // Store the seed used for key generation
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // Generate random hex seed
+        function generateRandomSeed() {
+            const bytes = new Uint8Array(48); // 48 bytes = 96 hex chars
+            crypto.getRandomValues(bytes);
+            return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Load or generate keys from localStorage
+        function loadOrGenerateKeySeed() {
+            let seed = localStorage.getItem('dilithium_seed');
+            if (!seed) {
+                log('No seed found in localStorage, generating new random seed...');
+                seed = generateRandomSeed();
+                localStorage.setItem('dilithium_seed', seed);
+                log('Seed saved to localStorage');
+            } else {
+                log('Seed loaded from localStorage');
+            }
+            keySeed = seed;
+            return seed;
+        }
+
+        // Save keys to localStorage
+        function saveKeysToLocalStorage(keys, seed) {
+            localStorage.setItem('dilithium_seed', seed);
+            localStorage.setItem('client_id', keys.id);
+            localStorage.setItem('public_key', keys.pub);
+            localStorage.setItem('private_key', keys.priv);
+            log('Keys saved to localStorage');
+        }
+
+        // Modal functions
+        window.openKeysModal = function() {
+            if (!clientKeys) {
+                alert('Keys not yet generated');
+                return;
+            }
+
+            document.getElementById('modalClientId').textContent = clientKeys.id || 'N/A';
+            document.getElementById('modalPublicKey').textContent = clientKeys.pub || 'N/A';
+            document.getElementById('modalPrivateKey').textContent = clientKeys.priv || 'N/A';
+            document.getElementById('modalSeed').textContent = keySeed || 'N/A';
+
+            document.getElementById('keysModal').classList.add('show');
+        };
+
+        window.closeKeysModal = function() {
+            document.getElementById('keysModal').classList.remove('show');
+        };
+
+        window.downloadKeys = function() {
+            if (!clientKeys) {
+                alert('Keys not yet generated');
+                return;
+            }
+
+            const keysData = {
+                clientId: clientKeys.id,
+                publicKey: clientKeys.pub,
+                privateKey: clientKeys.priv,
+                seed: keySeed,
+                timestamp: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(keysData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `net3-keys-${clientKeys.id.substring(0, 8)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            log('Keys downloaded');
+        };
+
+        window.regenerateKeys = async function() {
+            if (!dilithiumInitialized) {
+                alert('Keys not yet initialized. Please wait for initialization to complete.');
+                return;
+            }
+
+            // Show confirmation dialog
+            const confirmed = confirm(
+                '⚠️ WARNING ⚠️\n\n' +
+                'This will permanently delete your current keys and generate new ones.\n\n' +
+                'Your current Client ID: ' + (clientKeys ? clientKeys.id : 'N/A') + '\n\n' +
+                'Are you sure you want to continue?'
+            );
+
+            if (!confirmed) {
+                log('Key regeneration cancelled by user');
+                return;
+            }
+
+            try {
+                log('========================================');
+                log('Regenerating keys...');
+
+                // Generate new random seed
+                const newSeed = generateRandomSeed();
+
+                // Generate new keys from the new seed
+                await generateClientKeys(newSeed);
+
+                log('✓ Keys regenerated successfully');
+                log(`New Client ID: ${clientKeys.id}`);
+
+                // Update the modal display
+                document.getElementById('modalClientId').textContent = clientKeys.id || 'N/A';
+                document.getElementById('modalPublicKey').textContent = clientKeys.pub || 'N/A';
+                document.getElementById('modalPrivateKey').textContent = clientKeys.priv || 'N/A';
+                document.getElementById('modalSeed').textContent = keySeed || 'N/A';
+
+                alert('✓ Keys regenerated successfully!\n\nNew Client ID: ' + clientKeys.id);
+            } catch (error) {
+                log(`ERROR: Failed to regenerate keys: ${error.message}`);
+                console.error(error);
+                alert('Error: Failed to regenerate keys. See console log for details.');
+            }
+        };
+
+
+        function showLoadingSpinner(message = 'Loading...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingText = overlay.querySelector('.loading-text');
+
+            if (loadingText) {
+                loadingText.textContent = message;
+            }
+
+            overlay.classList.add('show');
+        }
+
+        function hideLoadingSpinner() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('show');
+        }
+
+        // Keep the old function name for compatibility but redirect to new functions
+        function setLoadingCursor(enabled, message = 'Loading...') {
+            if (enabled) {
+                showLoadingSpinner(message);
+            } else {
+                hideLoadingSpinner();
+            }
+        }
+
+        async function generateClientKeys(seed = null) {
+            try {
+                if (seed) {
+                    log(`Generating client identity from seed: ${seed.substring(0, 32)}...`);
+                    clientKeys = await keyGenFromSeed(seed);
+                    log('Keys generated from seed successfully');
+                    keySeed = seed;
+                } else {
+                    log('Generating random client identity (Dilithium5 keypair)...');
+                    clientKeys = await keyGen();
+                    log('Random keys generated successfully');
+                    keySeed = null;
+                }
+
+                // Calculate client ID
+                const foldedHash = await createFoldedHash(clientKeys.pub);
+                clientKeys.id = hexToBase58(foldedHash);
+
+                log(`Client ID: ${clientKeys.id}`);
+
+                // Save to localStorage if seed is used
+                if (seed) {
+                    saveKeysToLocalStorage(clientKeys, seed);
+                }
+
+                return clientKeys;
+            } catch (error) {
+                log(`ERROR: Key generation failed: ${error.message}`);
+                console.error(error);
+                throw error;
+            }
+        }
+
+        async function initializeClient() {
+            try {
+                log('Initializing Dilithium WASM module...');
+                await initDilithium();
+                dilithiumInitialized = true;
+                log('Dilithium initialized successfully');
+
+                // Load or generate seed from localStorage
+                const seed = loadOrGenerateKeySeed();
+                await generateClientKeys(seed);
+                log('Ready to connect!');
+            } catch (error) {
+                log(`ERROR: Initialization failed: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('keysModal');
+            if (event.target === modal) {
+                closeKeysModal();
+            }
+        };
+
+        window.connectTo = async function(host,port,path,serverId) {
+            if (!clientKeys) {
+                log('ERROR: Client keys not initialized yet');
+                return;
+            }
+
+            try {
+                log('========================================');
+                log('Starting secure connection...');
+
+
+                connection = new SecureConnectionWS();
+
+                const intended = {
+                    host: host,
+                    port: port,
+                    path: path || undefined,
+                    id: serverId
+                };
+
+                const wsUrl = path
+                    ? `wss://${host}:${port}${path}`
+                    : `wss://${host}:${port}`;
+
+                log(`Connecting to ${wsUrl}`);
+                log(`Intended server ID: ${serverId}`);
+                log('');
+                log('Handshake Phases:');
+                log('  Pass 0: Sending connection template...');
+
+                showLoadingSpinner('Establishing secure connection...');
+                await connection.connect(clientKeys, intended);
+                hideLoadingSpinner();
+
+                log('');
+                log('✓ HANDSHAKE COMPLETE!');
+                log('✓ Secure channel established');
+                log('✓ Both parties authenticated');
+                log(`✓ Connection info: ${connection.getConnectionInfo()}`);
+
+
+            } catch (error) {
+                hideLoadingSpinner();
+                log(`ERROR: Connection failed: ${error.message}`);
+                console.error(error);
+            }
+        };
+
+
+
+        window.sendCommand = async function(commandInput,show) {
+            if (!connection || !connection.isConnected()) {
+                log('ERROR: Not connected');
+                return;
+            }
+
+            try {
+                log('========================================');
+
+                if (!commandInput) {
+                    log('ERROR: Please enter a command');
+                    return;
+                }
+
+                // Try to parse as JSON
+                let commandObj=commandInput;
+                
+
+                log(`Sending command: ${JSON.stringify(commandObj)}`);
+
+                showLoadingSpinner('Sending request...');
+                const response = await connection.send(commandObj);
+                hideLoadingSpinner();
+
+                log(`Received response: ${JSON.stringify(response)}`);
+                log('✓ Command executed successfully');
+
+                // Display response in iframe
+                if(show)
+                showIframe(response);
+                else
+                return response;
+
+            } catch (error) {
+                hideLoadingSpinner();
+                log(`ERROR: Command failed: ${error.message}`);
+                console.error(error);
+            }
+        };
+
+        window.showIframe = function(data) {
+            log(`showIframe called with data type: ${typeof data}`);
+
+            const overlay = document.getElementById('iframeOverlay');
+            const iframe = document.getElementById('iframeContent');
+
+            let displayText = '';
+            let isBase64 = false;
+
+            // Handle JSON-RPC response structure
+            if (typeof data === 'object' && data.result) {
+                // Check if result has content with base64
+                if (data.result.content && data.result.contentType) {
+                    // Try to decode base64 content
+                    try {
+                        const decoded = atob(data.result.content);
+                        displayText = decoded;
+                        isBase64 = true;
+                        log(`Decoded base64 content, length: ${displayText.length}`);
+                    } catch (e) {
+                        // Not valid base64, show as-is
+                        displayText = data.result.content;
+                        log(`Using raw content, length: ${displayText.length}`);
+                    }
+                } else if (data.result.content) {
+                    displayText = data.result.content;
+                    log(`Using result.content, length: ${displayText.length}`);
+                } else {
+                    // Show entire result
+                    displayText = JSON.stringify(data.result, null, 2);
+                    log(`Using stringified result, length: ${displayText.length}`);
+                }
+            } else if (typeof data === 'string') {
+                // Try to decode base64
+                try {
+                    const decoded = atob(data);
+                    displayText = decoded;
+                    isBase64 = true;
+                    log(`Decoded string as base64, length: ${displayText.length}`);
+                } catch (e) {
+                    // Not base64, use as-is
+                    displayText = data;
+                    log(`Using string as-is, length: ${displayText.length}`);
+                }
+            } else if (typeof data === 'object') {
+                // JSON data - pretty print
+                displayText = JSON.stringify(data, null, 2);
+                log(`Using stringified object, length: ${displayText.length}`);
+            } else {
+                displayText = String(data);
+                log(`Converting to string, length: ${displayText.length}`);
+            }
+
+            // Check if displayText contains HTML or if it's image data
+            const isHTML = displayText.trim().startsWith('<') && displayText.trim().includes('>');
+            const contentType = (data.result && data.result.contentType) ? data.result.contentType : '';
+            const isImage = contentType.startsWith('image/');
+
+            log(`contentType: ${contentType}, isHTML: ${isHTML}, isImage: ${isImage}`);
+
+            // Create HTML content for iframe
+            const iframeHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .display-container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .content-area {
+            flex: 1;
+            width: 100%;
+            overflow: auto;
+        }
+        .centered-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .content-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow: auto;
+        }
+        .html-display {
+            width: 100%;
+            min-height: 100vh;
+        }
+        .media-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .media-display img, .media-display video {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        .media-display embed, .media-display object {
+            width: 90vw;
+            height: 90vh;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #e0e0e0;
+        }
+        .json-view {
+            color: #e0e0e0;
+        }
+        .json-key {
+            color: #79c0ff;
+        }
+        .json-string {
+            color: #a5d6ff;
+        }
+        .json-number {
+            color: #79c0ff;
+        }
+        .json-boolean {
+            color: #ff7b72;
+        }
+        .json-null {
+            color: #ffa657;
+        }
+        .command-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+        .command-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .command-input {
+            width: 300px;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            font-family: monospace;
+            font-size: 14px;
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 10000;
+        }
+    <\/style>
+<\/head>
+<body>
+    <div id="displayArea" class="display-container"><\/div>
+    <script>
+        function sendCommand() {
+            const input = document.getElementById('commandInput').value.trim();
+            if (!input) {
+                alert('Please enter a command');
+                return;
+            }
+
+            try {
+                const commandObj = JSON.parse(input);
+                // Send message to parent to execute command
+                window.parent.postMessage({
+                    type: 'executeCommand',
+                    command: commandObj
+                }, '*');
+            } catch (e) {
+                alert('Invalid JSON format');
+            }
+        }
+
+        function sendWebappCommand(input) {
+            
+            try {
+                //const commandObj = JSON.parse(input);
+                commandObj=input;
+                //console.log(input);
+                // Send message to parent to execute command
+                window.parent.postMessage({
+                    type: 'webappCommand',
+                    command: commandObj
+                }, '*');
+            } catch (e) {
+                console.log(e);
+                alert('Invalid JSON format'); 
+            }
+        }
+
+        function webappGoTo(input) {
+
+            try {
+                //const commandObj = JSON.parse(input);
+                commandObj=input;
+                // Send message to parent to execute command
+                window.parent.postMessage({
+                    type: 'executeCommand',
+                    command: commandObj
+                }, '*');
+            } catch (e) {
+                alert('Invalid JSON format');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function syntaxHighlightJSON(json) {
+            if (typeof json !== 'string') {
+                json = JSON.stringify(json, null, 2);
+            }
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '<\/span>';
+            });
+        }
+
+        function renderContent(contentType, content, rawResponse) {
+            const displayArea = document.getElementById('displayArea');
+
+            let html = '';
+
+            // Determine content type and render accordingly
+            if (contentType === 'text/html' || (typeof content === 'string' && (content.trim().startsWith('<!DOCTYPE html') || content.trim().startsWith('<html')))) {
+                // HTML content
+                html = \`<div class="html-display">\${content}<\/div>\`;
+            } else if (contentType && contentType.startsWith('image/')) {
+                // Image content
+                html = \`<div class="media-display"><img src="data:\${contentType};base64,\${rawResponse.result.content}" alt="Image"><\/div>\`;
+            } else if (contentType === 'application/pdf') {
+                // PDF content
+                html = \`<div class="media-display"><embed src="data:application/pdf;base64,\${rawResponse.result.content}" type="application/pdf"><\/div>\`;
+            } else if (contentType && (contentType.startsWith('video/') || contentType.startsWith('audio/'))) {
+                // Video/Audio content
+                html = \`<div class="media-display"><video controls src="data:\${contentType};base64,\${rawResponse.result.content}"><\/video><\/div>\`;
+            } else if (typeof content === 'object') {
+                // Object/JSON content
+                html = \`<div class="centered-content"><div class="content-box"><pre class="json-view">\${syntaxHighlightJSON(content)}<\/pre><\/div><\/div>\`;
+            } else if (contentType && contentType.startsWith('text/')) {
+                // Text content
+                html = \`<div class="centered-content"><div class="content-box"><pre>\${escapeHtml(String(content))}<\/pre><\/div><\/div>\`;
+            } else {
+                // Default: try to display as text or JSON
+                if (typeof content === 'string') {
+                    html = \`<div class="centered-content"><div class="content-box"><pre>\${escapeHtml(content)}<\/pre><\/div><\/div>\`;
+                } else {
+                    html = \`<div class="centered-content"><div class="content-box"><pre class="json-view">\${syntaxHighlightJSON(content)}<\/pre><\/div><\/div>\`;
+                }
+            }
+
+            // Use createContextualFragment to allow scripts to execute
+            displayArea.innerHTML = ''; // Clear first
+            const range = document.createRange();
+            range.selectNode(displayArea);
+            const fragment = range.createContextualFragment(html);
+            displayArea.appendChild(fragment);
+        }
+
+        // Initial render
+        renderContent(
+            '${contentType}',
+            \`${displayText.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$').replace(/<\/script>/gi, '<\\/script>')}\`,
+            ${JSON.stringify(data)}
+        );
+
+        function handleResponse(response) {
+            let content = '';
+            let contentType = '';
+
+            // Handle JSON-RPC response structure
+            if (typeof response === 'object' && response.result) {
+                contentType = response.result.contentType || '';
+
+                if (response.result.content && response.result.contentType) {
+                    // Try to decode base64 content
+                    try {
+                        const decoded = atob(response.result.content);
+                        content = decoded;
+                    } catch (e) {
+                        // Not valid base64, show as-is
+                        content = response.result.content;
+                    }
+                } else if (response.result.content) {
+                    content = response.result.content;
+                } else {
+                    // Show entire result as JSON
+                    content = response.result;
+                    contentType = '';
+                }
+            } else if (typeof response === 'string') {
+                try {
+                    const decoded = atob(response);
+                    content = decoded;
+                } catch (e) {
+                    content = response;
+                }
+            } else {
+                content = response;
+            }
+
+            // Render the content
+            renderContent(contentType, content, response);
+        }
+
+        // Listen for responses from parent
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'commandResponse') {
+                handleResponse(event.data.response);
+            }
+            
+        });
+    <\/script>
+<\/body>
+<\/html>`;
+
+            // Write content to iframe
+            iframe.srcdoc = iframeHTML;
+
+            // Show overlay
+            overlay.classList.add('show');
+
+            log('Iframe displayed with server data');
+        };
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Listen for messages from iframe
+        window.addEventListener('message', async function(event) {
+            if (event.data.type === 'executeCommand') {
+                if (!connection || !connection.isConnected()) {
+                    log('ERROR: Not connected - command from iframe ignored');
+                    return;
+                }
+
+                try {
+                    log('========================================');
+                    log(`Command from iframe: ${JSON.stringify(event.data.command)}`);
+
+                    showLoadingSpinner('Processing request...');
+                    const response = await connection.send(event.data.command);
+                    hideLoadingSpinner();
+
+                    log(`Received response: ${JSON.stringify(response)}`);
+                    log('✓ Command executed successfully');
+
+                    // Send response back to iframe
+                    const iframe = document.getElementById('iframeContent');
+                    iframe.contentWindow.postMessage({
+                        type: 'commandResponse',
+                        response: response
+                    }, '*');
+
+                } catch (error) {
+                    hideLoadingSpinner();
+                    log(`ERROR: Command from iframe failed: ${error.message}`);
+                    console.error(error);
+                }
+            }
+            if (event.data.type === 'webappCommand') {
+                if (!connection || !connection.isConnected()) {
+                    log('ERROR: Not connected - command from iframe ignored');
+                    return;
+                }
+
+                try {
+                    log('========================================');
+                    log(`Command from iframe child: ${JSON.stringify(event.data.command)}`);
+
+                    showLoadingSpinner('Processing request...');
+                    const response = await connection.send(event.data.command);
+                    hideLoadingSpinner();
+
+                    log(`Received response: ${JSON.stringify(response)}`);
+                    log('✓ Command executed successfully');
+
+                    // Send response back to iframe
+                    const iframe = document.getElementById('iframeContent');
+                    iframe.contentWindow.postMessage({
+                        type: 'webappResponse',
+                        response: response
+                    }, '*');
+
+                } catch (error) {
+                    hideLoadingSpinner();
+                    log(`ERROR: Command from iframe failed: ${error.message}`);
+                    console.error(error);
+                }
+            }
+        });
+
+        window.closeIframe = function(event) {
+            // Prevent default to ensure it works on touch devices
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            window.testDisconnect();
+            const overlay = document.getElementById('iframeOverlay');
+            const iframe = document.getElementById('iframeContent');
+
+            // Clear the iframe content completely
+            iframe.srcdoc = '';
+
+            overlay.classList.remove('show');
+            log('Iframe closed');
+        };
+
+        window.testDisconnect = function() {
+            if (connection) {
+                log('========================================');
+                log('Disconnecting...');
+                connection.disconnect();
+                connection = null;
+                //updateStatus('disconnected');
+                //updateButtons(false);
+                log('✓ Disconnected');
+            }
+        };
+
+        window.clearLog = function() {
+            document.getElementById('log').textContent = '';
+            log('Log cleared');
+        };
+
+        // Initialize on page load
+        log('Page loaded');
+        initializeClient();
+
+        // Make connection available globally for debugging
+        window.debugConnection = () => connection;
+
+        // Add touch event support for close button on mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const closeBtn = document.querySelector('.iframe-close-btn');
+            if (closeBtn) {
+                // Add touch event listener for better mobile support
+                closeBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeIframe(e);
+                }, { passive: false });
+            }
+        });
+
+        const REGISTRY_HOST = '10.11.0.52';
+        const REGISTRY_PORT = 443;
+        const REGISTRY_PATH = '/registry';
+        const REGISTRY_ID = 'FZs63hQgWLaQLGiDdKzN8B';
+
+        window.goTo = async function(){
+            let root="/0";
+            let namee=document.getElementById("namee").value;
+
+            if(namee==""){
+                alert("Empty name string.\nExiting");
+                return;
+            }
+            //Connecting to registry
+            await window.connectTo(REGISTRY_HOST,REGISTRY_PORT,REGISTRY_PATH,REGISTRY_ID);
+            let cmd={"jsonrpc":"2.0","method":"getInfo","params":{"root":root,"name":namee},"id":0};
+            let res=await window.sendCommand(cmd,false);
+            //console.log(res);
+
+            window.testDisconnect(); 
+
+            if(res.result==undefined ||res.result.length==0){
+                alert("Name not found in the registry.\nExiting");
+                return;
+            }
+
+            //connecting to entity
+            let func=document.getElementById("func").value;
+            res=res.result[0];
+            await window.connectTo(res.target.host,res.target.port,res.target.path,res.id);
+             cmd={"jsonrpc":"2.0","method":func,"id":0};
+             res=await window.sendCommand(cmd,true);
+        }
+    </script>
+</body>
+</html>

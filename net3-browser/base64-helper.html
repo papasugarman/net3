@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Helper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        input[type="file"]:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        button.secondary:hover {
+            background: #5a6268;
+        }
+
+        .preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .preview img,
+        .preview video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        .info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            border-radius: 3px;
+            font-size: 14px;
+            color: #0d47a1;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Base64 Helper</h1>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('text')">Text/HTML</button>
+            <button class="tab" onclick="switchTab('image')">Images</button>
+            <button class="tab" onclick="switchTab('video')">Videos</button>
+        </div>
+
+        <!-- Text/HTML Tab -->
+        <div id="text-tab" class="tab-content active">
+            <div class="section">
+                <div class="section-title">Text/HTML Input</div>
+                <textarea id="text-input" placeholder="Enter text or HTML here..."></textarea>
+                <div class="button-group">
+                    <button onclick="encodeText()">Encode to Base64</button>
+                    <button onclick="decodeText()" class="secondary">Decode from Base64</button>
+                    <button onclick="clearText()" class="secondary">Clear</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Base64 Output</div>
+                <textarea id="text-output" placeholder="Base64 output will appear here..." readonly></textarea>
+                <div class="button-group">
+                    <button onclick="copyToClipboard('text-output')">Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Tab -->
+        <div id="image-tab" class="tab-content">
+            <div class="section">
+                <div class="section-title">Select Image File</div>
+                <input type="file" id="image-input" accept="image/*" onchange="handleImageUpload(event)">
+                <div class="info">Supported formats: JPG, PNG, GIF, WebP, SVG, etc.</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Base64 Output</div>
+                <textarea id="image-output" placeholder="Base64 image data will appear here..." readonly></textarea>
+                <div class="button-group">
+                    <button onclick="copyToClipboard('image-output')">Copy to Clipboard</button>
+                    <button onclick="copyImageDataURL()" class="secondary">Copy Data URL</button>
+                    <button onclick="clearImage()" class="secondary">Clear</button>
+                </div>
+            </div>
+
+            <div id="image-preview" class="preview" style="display:none;">
+                <div class="section-title">Preview</div>
+                <img id="image-preview-img" alt="Preview">
+            </div>
+        </div>
+
+        <!-- Video Tab -->
+        <div id="video-tab" class="tab-content">
+            <div class="section">
+                <div class="section-title">Select Video File</div>
+                <input type="file" id="video-input" accept="video/*" onchange="handleVideoUpload(event)">
+                <div class="info">Supported formats: MP4, WebM, OGG, etc. Note: Large videos may take time to encode.</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Base64 Output</div>
+                <textarea id="video-output" placeholder="Base64 video data will appear here..." readonly></textarea>
+                <div class="button-group">
+                    <button onclick="copyToClipboard('video-output')">Copy to Clipboard</button>
+                    <button onclick="copyVideoDataURL()" class="secondary">Copy Data URL</button>
+                    <button onclick="clearVideo()" class="secondary">Clear</button>
+                </div>
+            </div>
+
+            <div id="video-preview" class="preview" style="display:none;">
+                <div class="section-title">Preview</div>
+                <video id="video-preview-video" controls></video>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImageDataURL = '';
+        let currentVideoDataURL = '';
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Text/HTML functions
+        function encodeText() {
+            const input = document.getElementById('text-input').value;
+            if (!input) {
+                alert('Please enter some text to encode');
+                return;
+            }
+            const encoded = btoa(unescape(encodeURIComponent(input)));
+            const jsonOutput = {
+                contentType: 'text/html',
+                content: encoded
+            };
+            document.getElementById('text-output').value = JSON.stringify(jsonOutput, null, 2);
+        }
+
+        function decodeText() {
+            const input = document.getElementById('text-input').value;
+            if (!input) {
+                alert('Please enter base64 text to decode');
+                return;
+            }
+            try {
+                const decoded = decodeURIComponent(escape(atob(input)));
+                document.getElementById('text-output').value = decoded;
+            } catch (e) {
+                alert('Invalid base64 string');
+            }
+        }
+
+        function clearText() {
+            document.getElementById('text-input').value = '';
+            document.getElementById('text-output').value = '';
+        }
+
+        // Image functions
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                currentImageDataURL = base64;
+
+                // Extract just the base64 part (without the data URL prefix)
+                const base64Only = base64.split(',')[1];
+                const contentType = file.type || 'image/png';
+
+                const jsonOutput = {
+                    contentType: contentType,
+                    content: base64Only
+                };
+                document.getElementById('image-output').value = JSON.stringify(jsonOutput, null, 2);
+
+                // Show preview
+                const preview = document.getElementById('image-preview');
+                const img = document.getElementById('image-preview-img');
+                img.src = base64;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function copyImageDataURL() {
+            if (!currentImageDataURL) {
+                alert('Please upload an image first');
+                return;
+            }
+            copyTextToClipboard(currentImageDataURL);
+        }
+
+        function clearImage() {
+            document.getElementById('image-input').value = '';
+            document.getElementById('image-output').value = '';
+            document.getElementById('image-preview').style.display = 'none';
+            currentImageDataURL = '';
+        }
+
+        // Video functions
+        function handleVideoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                currentVideoDataURL = base64;
+
+                // Extract just the base64 part (without the data URL prefix)
+                const base64Only = base64.split(',')[1];
+                const contentType = file.type || 'video/mp4';
+
+                const jsonOutput = {
+                    contentType: contentType,
+                    content: base64Only
+                };
+                document.getElementById('video-output').value = JSON.stringify(jsonOutput, null, 2);
+
+                // Show preview
+                const preview = document.getElementById('video-preview');
+                const video = document.getElementById('video-preview-video');
+                video.src = base64;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function copyVideoDataURL() {
+            if (!currentVideoDataURL) {
+                alert('Please upload a video first');
+                return;
+            }
+            copyTextToClipboard(currentVideoDataURL);
+        }
+
+        function clearVideo() {
+            document.getElementById('video-input').value = '';
+            document.getElementById('video-output').value = '';
+            document.getElementById('video-preview').style.display = 'none';
+            currentVideoDataURL = '';
+        }
+
+        // Utility functions
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element.value) {
+                alert('Nothing to copy');
+                return;
+            }
+
+            element.select();
+            document.execCommand('copy');
+
+            // Show feedback
+            const originalPlaceholder = element.placeholder;
+            element.placeholder = 'Copied to clipboard!';
+            setTimeout(() => {
+                element.placeholder = originalPlaceholder;
+            }, 2000);
+        }
+
+        function copyTextToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('Copied to clipboard!');
+        }
+    </script>
+</body>
+</html>
