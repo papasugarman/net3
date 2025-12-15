@@ -1,0 +1,12 @@
+{
+    "protocol":"net3",
+    "version":"3.0",
+    "routine":"secure",
+    "algorithms":{
+        "encryption":
+            {
+                "asymmetric":"MlKEM-1024",
+                "symmetric": "AES-256-GCM"
+            }
+    }
+}
