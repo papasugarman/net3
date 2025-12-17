@@ -171,6 +171,4 @@ Modify these in the class constructors as needed for your network setup.
 
 **Timeout errors**: Increase timeout value or check network connectivity
 
-## License
 
-ISC
